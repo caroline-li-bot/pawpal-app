@@ -13,7 +13,7 @@ export const useChatStore = defineStore('chat', () => {
   const isLoading = ref(false)
   const isLoadingMessages = ref(false)
   const error = ref<string | null>(null)
-  const activeChannel = ref<ReturnType<typeof chatApi.subscribeToMessages> | null>(null)
+  const activeChannel = ref<any>(null)
   const unreadCount = ref(0)
 
   // Getters
@@ -138,20 +138,35 @@ export const useChatStore = defineStore('chat', () => {
     // 取消之前的订阅
     unsubscribe()
     
-    activeChannel.value = chatApi.subscribeToMessages(matchId, (message) => {
-      // 添加新消息到本地
-      if (!messages.value[matchId]) {
-        messages.value[matchId] = []
-      }
-      messages.value[matchId].push(message)
-      
-      // 更新聊天列表
-      const chatIndex = chatList.value.findIndex(chat => chat.match_id === matchId)
-      if (chatIndex > -1) {
-        chatList.value[chatIndex].last_message = message
-        chatList.value[chatIndex].updated_at = message.created_at
-      }
-    })
+    const channel = supabase
+      .channel(`messages:${matchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `match_id=eq.${matchId}`,
+        },
+        (payload) => {
+          const message = payload.new as Message
+          // 添加新消息到本地
+          if (!messages.value[matchId]) {
+            messages.value[matchId] = []
+          }
+          messages.value[matchId].push(message)
+          
+          // 更新聊天列表
+          const chatIndex = chatList.value.findIndex(chat => chat.match_id === matchId)
+          if (chatIndex > -1) {
+            chatList.value[chatIndex].last_message = message
+            chatList.value[chatIndex].updated_at = message.created_at
+          }
+        }
+      )
+      .subscribe()
+    
+    activeChannel.value = channel
   }
 
   /**

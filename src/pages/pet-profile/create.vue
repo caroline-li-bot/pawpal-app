@@ -60,13 +60,13 @@
           <text class="label">宠物类型 <text class="required">*</text></text>
           <view class="options">
             <view 
-              v-for="type in petTypes" 
-              :key="type.value"
+              v-for="petType in petTypes" 
+              :key="petType.value"
               class="option"
-              :class="{ active: form.type === type.value }"
-              @click="form.type = type.value"
+              :class="{ active: form.type === petType.value }"
+              @click="form.type = petType.value as PetType"
             >
-              <text>{{ type.icon }} {{ type.label }}</text>
+              <text>{{ petType.icon }} {{ petType.label }}</text>
             </view>
           </view>
         </view>
@@ -92,7 +92,7 @@
               :key="gender.value"
               class="option"
               :class="{ active: form.gender === gender.value }"
-              @click="form.gender = gender.value"
+              @click="form.gender = gender.value as PetGender"
             >
               <text>{{ gender.icon }} {{ gender.label }}</text>
             </view>
@@ -123,7 +123,7 @@
               :key="size.value"
               class="option"
               :class="{ active: form.size === size.value }"
-              @click="form.size = size.value"
+              @click="form.size = size.value as PetSize"
             >
               <text>{{ size.icon }} {{ size.label }}</text>
             </view>
@@ -173,7 +173,6 @@
           class="textarea"
           placeholder="介绍一下你的宠物，让大家更好地了解它..."
           maxlength="200"
-          :maxlength="200"
         />
         <text class="char-count">{{ form.bio.length }}/200</text>
       </view>
