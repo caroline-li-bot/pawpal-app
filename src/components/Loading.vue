@@ -5,7 +5,7 @@
         <view class="spinner-dot" v-for="i in 3" :key="i"></view>
       </view>
       <text v-if="text" class="loading-text">{{ text }}</text>
-      <slot></sslot>
+      <slot></slot>
     </view>
   </view>
 </template>

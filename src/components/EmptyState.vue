@@ -8,7 +8,7 @@
       <text>{{ actionText }}</text>
     </button>
     
-    <slot></sslot>
+    <slot></slot>
   </view>
 </template>
 
