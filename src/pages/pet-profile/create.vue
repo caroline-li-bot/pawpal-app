@@ -8,15 +8,15 @@
     <scroll-view scroll-y class="form-container">
       <!-- 照片上传 -->
       <view class="section">
-        <text class="section-title">宠物照片</text>
+        <text class="section-title">宠物照片 <text class="required">*</text></text>
         <view class="photo-upload">
           <view 
             v-for="(photo, index) in form.photos" 
             :key="index"
             class="photo-item"
           >
-            <image :src="photo" mode="aspectFill" class="photo" />
-            <view class="delete-btn" @click="removePhoto(index)">
+            <image :src="photo" mode="aspectFill" class="photo" @click="previewPhoto(index)" />
+            <view class="delete-btn" @click.stop="removePhoto(index)">
               <text>×</text>
             </view>
           </view>
@@ -24,12 +24,19 @@
           <view 
             v-if="form.photos.length < 6"
             class="upload-btn"
+            :class="{ 'is-uploading': isUploading }"
             @click="choosePhoto"
           >
-            <text class="upload-icon">+</text>
-            <text class="upload-text">{{ form.photos.length }}/6</text>
+            <view v-if="isUploading" class="upload-loading">
+              <view class="loading-spinner"></view>
+            </view>
+            <view v-else>
+              <text class="upload-icon">+</text>
+              <text class="upload-text">{{ form.photos.length }}/6</text>
+            </view>
           </view>
         </view>
+        <text v-if="photoError" class="error-text">{{ photoError }}</text>
       </view>
 
       <!-- 基本信息 -->
@@ -37,17 +44,20 @@
         <text class="section-title">基本信息</text>
         
         <view class="form-item">
-          <text class="label">宠物昵称</text>
+          <text class="label">宠物昵称 <text class="required">*</text></text>
           <input 
             v-model="form.name"
             class="input"
+            :class="{ 'is-error': errors.name }"
             placeholder="给宠物起个可爱的名字"
             maxlength="20"
+            @blur="validateField('name')"
           />
+          <text v-if="errors.name" class="error-text">{{ errors.name }}</text>
         </view>
 
         <view class="form-item">
-          <text class="label">宠物类型</text>
+          <text class="label">宠物类型 <text class="required">*</text></text>
           <view class="options">
             <view 
               v-for="type in petTypes" 
@@ -62,17 +72,20 @@
         </view>
 
         <view class="form-item">
-          <text class="label">品种</text>
+          <text class="label">品种 <text class="required">*</text></text>
           <input 
             v-model="form.breed"
             class="input"
+            :class="{ 'is-error': errors.breed }"
             placeholder="例如：金毛、布偶猫"
             maxlength="20"
+            @blur="validateField('breed')"
           />
+          <text v-if="errors.breed" class="error-text">{{ errors.breed }}</text>
         </view>
 
         <view class="form-item">
-          <text class="label">性别</text>
+          <text class="label">性别 <text class="required">*</text></text>
           <view class="options">
             <view 
               v-for="gender in genders" 
@@ -103,7 +116,7 @@
         </view>
 
         <view class="form-item">
-          <text class="label">体型</text>
+          <text class="label">体型 <text class="required">*</text></text>
           <view class="options">
             <view 
               v-for="size in sizes" 
@@ -132,6 +145,7 @@
             <text>{{ tag }}</text>
           </view>
         </view>
+        <text class="hint-text">最多选择5个</text>
       </view>
 
       <!-- 兴趣爱好 -->
@@ -148,6 +162,7 @@
             <text>{{ interest }}</text>
           </view>
         </view>
+        <text class="hint-text">最多选择5个</text>
       </view>
 
       <!-- 个性签名 -->
@@ -165,11 +180,16 @@
 
       <!-- 位置信息 -->
       <view class="section">
-        <text class="section-title">所在位置</text>
-        <view class="location-picker" @click="chooseLocation">
+        <text class="section-title">所在位置 <text class="required">*</text></text>
+        <view 
+          class="location-picker" 
+          :class="{ 'is-error': errors.location, 'is-selected': form.location }"
+          @click="chooseLocation"
+        >
           <text class="location-icon">📍</text>
           <text class="location-text">{{ form.location || '点击选择位置' }}</text>
         </view>
+        <text v-if="errors.location" class="error-text">{{ errors.location }}</text>
       </view>
 
       <!-- 底部留白 -->
@@ -181,22 +201,29 @@
       <button 
         class="submit-btn"
         :loading="isSubmitting"
-        :disabled="!isFormValid"
+        :disabled="!isFormValid || isSubmitting"
         @click="handleSubmit"
       >
-        <text>完成创建</text>
+        <text>{{ submitButtonText }}</text>
       </button>
     </view>
+
+    <!-- 全局加载 -->
+    <Loading :visible="isSubmitting" text="创建中..." />
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { petApi } from '@/api/supabase'
 import type { PetType, PetGender, PetSize } from '@/types'
+import Loading from '@/components/Loading.vue'
 
 const userStore = useUserStore()
 const isSubmitting = ref(false)
+const isUploading = ref(false)
+const photoError = ref('')
 
 // 表单数据
 const form = ref({
@@ -213,6 +240,13 @@ const form = ref({
   longitude: undefined as number | undefined,
   personality_tags: [] as string[],
   interests: [] as string[],
+})
+
+// 错误信息
+const errors = reactive({
+  name: '',
+  breed: '',
+  location: '',
 })
 
 // 选项数据
@@ -253,6 +287,44 @@ const isFormValid = computed(() => {
          form.value.location
 })
 
+const submitButtonText = computed(() => {
+  return isSubmitting.value ? '创建中...' : '完成创建'
+})
+
+/**
+ * 验证字段
+ */
+function validateField(field: 'name' | 'breed' | 'location') {
+  errors[field] = ''
+  
+  if (field === 'name' && !form.value.name.trim()) {
+    errors.name = '请输入宠物昵称'
+  }
+  if (field === 'breed' && !form.value.breed.trim()) {
+    errors.breed = '请输入品种'
+  }
+  if (field === 'location' && !form.value.location) {
+    errors.location = '请选择位置'
+  }
+}
+
+/**
+ * 验证表单
+ */
+function validateForm(): boolean {
+  validateField('name')
+  validateField('breed')
+  validateField('location')
+  
+  if (form.value.photos.length === 0) {
+    photoError.value = '请至少上传一张照片'
+  } else {
+    photoError.value = ''
+  }
+  
+  return !errors.name && !errors.breed && !errors.location && !photoError.value
+}
+
 /**
  * 格式化年龄显示
  */
@@ -273,24 +345,76 @@ function handleAgeChange(e: any) {
 /**
  * 选择照片
  */
-function choosePhoto() {
+async function choosePhoto() {
+  if (isUploading.value) return
+  
   const remainingCount = 6 - form.value.photos.length
   
   uni.chooseImage({
     count: remainingCount,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
-    success: (res) => {
-      form.value.photos.push(...res.tempFilePaths)
+    success: async (res) => {
+      isUploading.value = true
+      photoError.value = ''
+      
+      try {
+        // 上传每张照片
+        for (const filePath of res.tempFilePaths) {
+          // #ifdef MP-WEIXIN
+          const fileName = filePath.split('/').pop() || 'photo.jpg'
+          const url = await petApi.uploadPhotoMP(filePath, fileName)
+          form.value.photos.push(url)
+          // #endif
+          
+          // #ifdef H5
+          // H5 环境需要特殊处理
+          const response = await fetch(filePath)
+          const blob = await response.blob()
+          const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' })
+          const url = await petApi.uploadPhotoH5(file)
+          form.value.photos.push(url)
+          // #endif
+        }
+      } catch (err: any) {
+        photoError.value = err.message || '上传失败'
+        uni.showToast({
+          title: err.message || '上传失败',
+          icon: 'none',
+        })
+      } finally {
+        isUploading.value = false
+      }
     },
+    fail: (err) => {
+      console.error('Choose image failed:', err)
+    },
+  })
+}
+
+/**
+ * 预览照片
+ */
+function previewPhoto(index: number) {
+  uni.previewImage({
+    current: form.value.photos[index],
+    urls: form.value.photos,
   })
 }
 
 /**
  * 删除照片
  */
-function removePhoto(index: number) {
-  form.value.photos.splice(index, 1)
+async function removePhoto(index: number) {
+  try {
+    const photoUrl = form.value.photos[index]
+    await petApi.deletePhoto(photoUrl)
+    form.value.photos.splice(index, 1)
+    photoError.value = ''
+  } catch (err: any) {
+    // 即使删除失败也从本地移除
+    form.value.photos.splice(index, 1)
+  }
 }
 
 /**
@@ -317,6 +441,14 @@ function chooseLocation() {
       form.value.location = res.name || res.address
       form.value.latitude = res.latitude
       form.value.longitude = res.longitude
+      errors.location = ''
+    },
+    fail: (err) => {
+      console.error('Choose location failed:', err)
+      uni.showToast({
+        title: '选择位置失败',
+        icon: 'none',
+      })
     },
   })
 }
@@ -325,9 +457,16 @@ function chooseLocation() {
  * 提交表单
  */
 async function handleSubmit() {
-  if (!isFormValid.value) return
+  if (!validateForm()) {
+    uni.showToast({
+      title: '请完善必填信息',
+      icon: 'none',
+    })
+    return
+  }
 
   isSubmitting.value = true
+  
   try {
     await userStore.createPetProfile({
       ...form.value,
@@ -400,6 +539,10 @@ async function handleSubmit() {
   display: block;
 }
 
+.required {
+  color: #FF6B6B;
+}
+
 /* 照片上传 */
 .photo-upload {
   display: flex;
@@ -447,6 +590,30 @@ async function handleSubmit() {
   background: #fafafa;
 }
 
+.upload-btn.is-uploading {
+  border-color: #FF6B6B;
+}
+
+.upload-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 40rpx;
+  height: 40rpx;
+  border: 4rpx solid #f3f3f3;
+  border-top: 4rpx solid #FF6B6B;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .upload-icon {
   font-size: 60rpx;
   color: #999;
@@ -480,6 +647,13 @@ async function handleSubmit() {
   border-radius: 12rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+
+.input.is-error {
+  border-color: #FF6B6B;
+  background: #FFF5F5;
 }
 
 .options {
@@ -509,6 +683,20 @@ async function handleSubmit() {
   font-size: 28rpx;
   color: #FF6B6B;
   text-align: center;
+  margin-top: 16rpx;
+  display: block;
+}
+
+.error-text {
+  font-size: 24rpx;
+  color: #FF6B6B;
+  margin-top: 12rpx;
+  display: block;
+}
+
+.hint-text {
+  font-size: 24rpx;
+  color: #999;
   margin-top: 16rpx;
   display: block;
 }
@@ -561,6 +749,17 @@ async function handleSubmit() {
   display: flex;
   align-items: center;
   padding: 0 24rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+
+.location-picker.is-error {
+  border-color: #FF6B6B;
+  background: #FFF5F5;
+}
+
+.location-picker.is-selected {
+  background: #F0F9FF;
 }
 
 .location-icon {

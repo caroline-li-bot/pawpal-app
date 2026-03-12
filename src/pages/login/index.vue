@@ -37,10 +37,11 @@
       <button 
         class="wechat-login-btn"
         :loading="userStore.isLoading"
-        @click="handleWechatLogin"
+        :disabled="userStore.isLoading"
+        @click="handleLogin"
       >
         <text class="btn-icon">💬</text>
-        <text class="btn-text">微信一键登录</text>
+        <text class="btn-text">{{ loginButtonText }}</text>
       </button>
 
       <!-- 协议 -->
@@ -58,15 +59,38 @@
         </checkbox-group>
       </view>
     </view>
+
+    <!-- H5 登录模态框 -->
+    <H5LoginModal v-model="showH5Login" @success="onH5LoginSuccess" />
+
+    <!-- 加载状态 -->
+    <Loading :visible="userStore.isLoading" text="登录中..." />
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
+import Loading from '@/components/Loading.vue'
+import H5LoginModal from '@/components/H5LoginModal.vue'
 
 const userStore = useUserStore()
 const agreed = ref(false)
+const showH5Login = ref(false)
+
+// 判断是否为 H5 环境
+const isH5 = computed(() => {
+  // #ifdef H5
+  return true
+  // #endif
+  // #ifndef H5
+  return false
+  // #endif
+})
+
+const loginButtonText = computed(() => {
+  return isH5.value ? '立即登录' : '微信一键登录'
+})
 
 /**
  * 处理协议勾选
@@ -76,9 +100,9 @@ function handleAgreementChange(e: any) {
 }
 
 /**
- * 微信登录
+ * 处理登录
  */
-async function handleWechatLogin() {
+async function handleLogin() {
   if (!agreed.value) {
     uni.showToast({
       title: '请先同意用户协议和隐私政策',
@@ -87,6 +111,21 @@ async function handleWechatLogin() {
     return
   }
 
+  // #ifdef H5
+  // H5 环境显示登录模态框
+  showH5Login.value = true
+  // #endif
+
+  // #ifdef MP-WEIXIN
+  // 微信小程序环境使用微信登录
+  await handleWechatLogin()
+  // #endif
+}
+
+/**
+ * 微信登录
+ */
+async function handleWechatLogin() {
   try {
     await userStore.wechatLogin()
     
@@ -101,6 +140,20 @@ async function handleWechatLogin() {
       title: err.message || '登录失败',
       icon: 'none',
     })
+  }
+}
+
+/**
+ * H5 登录成功
+ */
+async function onH5LoginSuccess() {
+  await userStore.fetchUserProfile()
+  
+  // 检查是否有宠物资料
+  if (userStore.hasPetProfile) {
+    uni.switchTab({ url: '/pages/home/index' })
+  } else {
+    uni.redirectTo({ url: '/pages/pet-profile/create' })
   }
 }
 
@@ -123,9 +176,9 @@ function showPrivacyPolicy() {
 }
 
 // #ifdef H5
-// H5 开发环境自动跳转
+// H5 开发环境检查是否已登录
 if (import.meta.env.DEV) {
-  console.log('H5 开发环境，模拟已登录')
+  console.log('H5 开发环境')
 }
 // #endif
 </script>
@@ -275,6 +328,10 @@ if (import.meta.env.DEV) {
 .wechat-login-btn:active {
   transform: scale(0.98);
   opacity: 0.9;
+}
+
+.wechat-login-btn[disabled] {
+  opacity: 0.6;
 }
 
 .btn-icon {
