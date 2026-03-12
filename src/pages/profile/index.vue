@@ -6,8 +6,8 @@
     </view>
 
     <!-- 用户信息卡片 -->
-    <view class="profile-card"
-      <view class="user-info"
+    <view class="profile-card">
+      <view class="user-info">
         <image 
           :src="userStore.petProfile?.photos[0] || '/static/default-avatar.png'" 
           class="user-avatar"
@@ -15,9 +15,9 @@
           @click="previewAvatar"
         />
         
-        <view class="user-meta"
+        <view class="user-meta">
           <text class="user-name">{{ userStore.petProfile?.name || '未设置昵称' }}</text>
-          <view class="user-tags"
+          <view class="user-tags">
             <text class="user-tag">{{ userStore.petProfile?.breed }}</text>
             <text class="user-tag">{{ formatAge(userStore.petProfile?.age || 0) }}</text>
           </view>
@@ -25,22 +25,22 @@
       </view>
 
       <!-- 统计数据 -->
-      <view class="stats-row"
-        <view class="stat-item" @click="goToMatches"
+      <view class="stats-row">
+        <view class="stat-item" @click="goToMatches">
           <text class="stat-value">{{ matchCount }}</text>
           <text class="stat-label">匹配</text>
         </view>
         
         <view class="stat-divider"></view>
         
-        <view class="stat-item" @click="goToLikes"
+        <view class="stat-item" @click="goToLikes">
           <text class="stat-value">{{ likeCount }}</text>
           <text class="stat-label">喜欢</text>
         </view>
         
         <view class="stat-divider"></view>
         
-        <view class="stat-item"
+        <view class="stat-item">
           <text class="stat-value">{{ visitorCount }}</text>
           <text class="stat-label">访客</text>
         </view>
@@ -48,41 +48,41 @@
     </view>
 
     <!-- 功能菜单 -->
-    <view class="menu-section"
-      <view class="menu-group"
-        <view class="menu-item" @click="editProfile"
+    <view class="menu-section">
+      <view class="menu-group">
+        <view class="menu-item" @click="editProfile">
           <text class="menu-icon">✏️</text>
           <text class="menu-text">编辑资料</text>
           <text class="menu-arrow">›</text>
         </view>
         
-        <view class="menu-item" @click="myPhotos"
+        <view class="menu-item" @click="myPhotos">
           <text class="menu-icon">📷</text>
           <text class="menu-text">我的相册</text>
           <text class="menu-arrow">›</text>
         </view>
         
-        <view class="menu-item" @click="myTags"
+        <view class="menu-item" @click="myTags">
           <text class="menu-icon">🏷️</text>
           <text class="menu-text">个性标签</text>
           <text class="menu-arrow">›</text>
         </view>
       </view>
 
-      <view class="menu-group"
-        <view class="menu-item" @click="settings"
+      <view class="menu-group">
+        <view class="menu-item" @click="settings">
           <text class="menu-icon">⚙️</text>
           <text class="menu-text">设置</text>
           <text class="menu-arrow">›</text>
         </view>
         
-        <view class="menu-item" @click="help"
+        <view class="menu-item" @click="help">
           <text class="menu-icon">❓</text>
           <text class="menu-text">帮助与反馈</text>
           <text class="menu-arrow">›</text>
         </view>
         
-        <view class="menu-item" @click="about"
+        <view class="menu-item" @click="about">
           <text class="menu-icon">ℹ️</text>
           <text class="menu-text">关于爪爪</text>
           <text class="menu-arrow">›</text>
@@ -90,15 +90,15 @@
       </view>
 
       <!-- 退出登录 -->
-      <view class="menu-group"
-        <view class="menu-item logout" @click="handleLogout"
+      <view class="menu-group">
+        <view class="menu-item logout" @click="handleLogout">
           <text class="menu-text">退出登录</text>
         </view>
       </view>
     </view>
 
     <!-- 版本信息 -->
-    <view class="version-info"
+    <view class="version-info">
       <text>爪爪 PawPal v1.0.0</text>
     </view>
   </view>

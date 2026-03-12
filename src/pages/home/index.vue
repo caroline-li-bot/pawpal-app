@@ -114,7 +114,7 @@
 
     <!-- 匹配成功动画 -->
     <view v-if="matchStore.showMatchAnimation" class="match-overlay" @click="matchStore.closeMatchAnimation">
-      <view class="match-content" @click.stop
+      <view class="match-content" @click.stop>
         <view class="match-header">
           <text class="match-title">🎉 匹配成功！</text>
           <text class="match-subtitle">你们互相喜欢了对方</text>

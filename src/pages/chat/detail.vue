@@ -46,7 +46,7 @@
 
           <view class="message-content">
             <!-- 文本消息 -->
-            <view v-if="message.type === 'text'" class="message-bubble"
+            <view v-if="message.type === 'text'" class="message-bubble">
               <text>{{ message.content }}</text>
             </view>
 
@@ -80,7 +80,7 @@
         </view>
       </view>
       
-      <view class="input-wrapper"
+      <view class="input-wrapper">
         <input 
           v-model="inputText"
           class="message-input"
@@ -93,7 +93,6 @@
           class="send-btn"
           :class="{ active: inputText.trim() }"
           @click="sendMessage"
-        
         >
           <text>发送</text>
         </view>

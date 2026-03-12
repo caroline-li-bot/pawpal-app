@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onShow } from '@dcloudio/uni-app'
+import { onShow } from '@dcloudio/uni-app'
 import { useChatStore } from '@/stores/chat'
 import { formatTime } from '@/utils'
 import type { ChatSession } from '@/types'
@@ -85,10 +85,6 @@ function onRefresh() {
     uni.stopPullDownRefresh()
   })
 }
-
-onMounted(() => {
-  chatStore.loadSessions()
-})
 
 onShow(() => {
   chatStore.loadSessions()

@@ -4,33 +4,33 @@
 <template>
   <view class="edit-profile-page">
     <!-- 导航栏 -->
-    <view class="nav-bar"
-      <view class="nav-left" @click="goBack"
+    <view class="nav-bar">
+      <view class="nav-left" @click="goBack">
         <text class="back-icon">‹</text>
       </view>
       
       <text class="nav-title">编辑资料</text>
       
-      <view class="nav-right" @click="handleSave"
+      <view class="nav-right" @click="handleSave">
         <text class="save-btn">保存</text>
       </view>
     </view>
 
     <!-- 编辑表单 -->
-    <scroll-view scroll-y class="form-container"
+    <scroll-view scroll-y class="form-container">
       <!-- 照片上传 -->
-      <view class="section"
+      <view class="section">
         <text class="section-title">宠物照片</text>
         
-        <view class="photo-upload"
+        <view class="photo-upload">
           <view 
             v-for="(photo, index) in form.photos" 
             :key="index"
             class="photo-item"
-          
+          >
             <image :src="photo" mode="aspectFill" class="photo" />
             
-            <view class="delete-btn" @click="removePhoto(index)"
+            <view class="delete-btn" @click="removePhoto(index)">
               <text>×</text>
             </view>
           </view>
@@ -39,7 +39,7 @@
             v-if="form.photos.length < 6"
             class="upload-btn"
             @click="choosePhoto"
-          
+          >
             <text class="upload-icon">+</text>
             <text class="upload-text">{{ form.photos.length }}/6</text>
           </view>
@@ -47,10 +47,10 @@
       </view>
 
       <!-- 基本信息 -->
-      <view class="section"
+      <view class="section">
         <text class="section-title">基本信息</text>
         
-        <view class="form-item"
+        <view class="form-item">
           <text class="label">宠物昵称</text>
           <input 
             v-model="form.name"
@@ -60,7 +60,7 @@
           />
         </view>
 
-        <view class="form-item"
+        <view class="form-item">
           <text class="label">品种</text>
           <input 
             v-model="form.breed"
@@ -70,7 +70,7 @@
           />
         </view>
 
-        <view class="form-item"
+        <view class="form-item">
           <text class="label">个性签名</text>
           <textarea 
             v-model="form.bio"
@@ -88,7 +88,7 @@
   </view>
 </template>
 
-<script setup lang="ts"
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'

@@ -1,46 +1,46 @@
 <template>
-  <view class="match-success-page"
-    <view class="animation-container"
-      <view class="hearts"
+  <view class="match-success-page">
+    <view class="animation-container">
+      <view class="hearts">
         <text v-for="n in 6" :key="n" class="heart">💕</text>
       </view>
       
-      <view class="match-title"
+      <view class="match-title">
         <text>🎉 匹配成功！</text>
       </view>
       
-      <view class="match-subtitle"
+      <view class="match-subtitle">
         <text>你们互相喜欢了对方</text>
       </view>
     </view>
 
-    <view class="avatars-container"
-      <view class="avatar-wrapper"
+    <view class="avatars-container">
+      <view class="avatar-wrapper">
         <image :src="myPet?.photos[0]" class="avatar" mode="aspectFill" />
         <text class="avatar-name">{{ myPet?.name }}</text>
       </view>
       
       <view class="match-icon">💕</view>
       
-      <view class="avatar-wrapper"
+      <view class="avatar-wrapper">
         <image :src="matchedPet?.photos[0]" class="avatar" mode="aspectFill" />
         <text class="avatar-name">{{ matchedPet?.name }}</text>
       </view>
     </view>
 
-    <view class="actions"
-      <button class="action-btn primary" @click="startChat"
+    <view class="actions">
+      <button class="action-btn primary" @click="startChat">
         <text>发送消息</text>
       </button>
       
-      <button class="action-btn secondary" @click="continueBrowsing"
+      <button class="action-btn secondary" @click="continueBrowsing">
         <text>继续浏览</text>
       </button>
     </view>
   </view>
 </template>
 
-<script setup lang="ts"
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
