@@ -24,7 +24,7 @@
         
         <view class="photo-upload">
           <view 
-            v-for="(photo, index) in form.photos" 
+            v-for="(photo, index) in photos" 
             :key="index"
             class="photo-item"
           >
@@ -36,12 +36,12 @@
           </view>
           
           <view 
-            v-if="form.photos.length < 6"
+            v-if="photos.length < 6"
             class="upload-btn"
             @click="choosePhoto"
           >
             <text class="upload-icon">+</text>
-            <text class="upload-text">{{ form.photos.length }}/6</text>
+            <text class="upload-text">{{ photos.length }}/6</text>
           </view>
         </view>
       </view>
@@ -78,7 +78,7 @@
             placeholder="介绍一下你的宠物..."
             maxlength="200"
           />
-          <text class="char-count">{{ form.bio.length }}/200</text>
+          <text class="char-count">{{ (form.bio || '').length }}/200</text>
         </view>
       </view>
 
@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
 import type { PetProfile } from '@/types'
@@ -104,6 +104,8 @@ const form = ref<Partial<PetProfile>>({
   photos: [],
 })
 
+const photos = computed(() => form.value.photos || [])
+
 onLoad((options) => {
   petId.value = options?.id || ''
   
@@ -117,14 +119,14 @@ onLoad((options) => {
  * 选择照片
  */
 function choosePhoto() {
-  const remainingCount = 6 - (form.value.photos?.length || 0)
+  const remainingCount = 6 - photos.value.length
   
   uni.chooseImage({
     count: remainingCount,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
     success: (res) => {
-      form.value.photos = [...(form.value.photos || []), ...res.tempFilePaths]
+      form.value.photos = [...photos.value, ...res.tempFilePaths]
     },
   })
 }
@@ -133,7 +135,9 @@ function choosePhoto() {
  * 删除照片
  */
 function removePhoto(index: number) {
-  form.value.photos?.splice(index, 1)
+  const newPhotos = [...photos.value]
+  newPhotos.splice(index, 1)
+  form.value.photos = newPhotos
 }
 
 /**

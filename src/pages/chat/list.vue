@@ -3,15 +3,26 @@
     <!-- 导航栏 -->
     <view class="nav-bar">
       <text class="nav-title">消息</text>
-      <view v-if="chatStore.unreadTotal > 0" class="unread-badge">
-        <text>{{ chatStore.unreadTotal }}</text>
+      <view v-if="chatStore.totalUnreadCount > 0" class="unread-badge">
+        <text>{{ chatStore.totalUnreadCount }}</text>
       </view>
     </view>
 
     <!-- 聊天列表 -->
-    <scroll-view scroll-y class="chat-list" refresher-enabled @refresherrefresh="onRefresh">
+    <scroll-view 
+      scroll-y 
+      class="chat-list" 
+      refresher-enabled 
+      :refresher-triggered="isRefreshing"
+      @refresherrefresh="onRefresh"
+    >
+      <!-- 加载状态 -->
+      <view v-if="chatStore.isLoading && chatStore.chatList.length === 0" class="loading-state">
+        <text>加载中...</text>
+      </view>
+
       <!-- 空状态 -->
-      <view v-if="chatStore.sessions.length === 0 && !chatStore.isLoading" class="empty-state">
+      <view v-else-if="chatStore.chatList.length === 0" class="empty-state">
         <text class="empty-icon">💬</text>
         <text class="empty-title">还没有消息</text>
         <text class="empty-desc">去主页发现更多宠物伙伴吧~</text>
@@ -23,14 +34,14 @@
 
       <!-- 列表项 -->
       <view 
-        v-for="session in chatStore.sessions" 
+        v-for="session in chatStore.sortedChatList" 
         :key="session.id"
         class="chat-item"
         @click="goToChat(session)"
       >
         <!-- 头像 -->
         <view class="avatar-wrapper">
-          <image :src="session.pet.photos[0]" class="avatar" mode="aspectFill" />
+          <image :src="session.pet.photos?.[0] || '/static/default-avatar.png'" class="avatar" mode="aspectFill" />
           <view v-if="session.unread_count > 0" class="unread-dot">
             <text v-if="session.unread_count <= 99">{{ session.unread_count }}</text>
             <text v-else>99+</text>
@@ -54,19 +65,21 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useChatStore } from '@/stores/chat'
 import { formatTime } from '@/utils'
 import type { ChatSession } from '@/types'
 
 const chatStore = useChatStore()
+const isRefreshing = ref(false)
 
 /**
  * 跳转到聊天详情
  */
 function goToChat(session: ChatSession) {
   uni.navigateTo({
-    url: `/pages/chat/detail?matchId=${session.match_id}&petId=${session.pet.id}&petName=${session.pet.name}`,
+    url: `/pages/chat/detail?matchId=${session.match_id}&petId=${session.pet.id}&petName=${session.pet.name}&petAvatar=${session.pet.photos?.[0] || ''}`,
   })
 }
 
@@ -80,14 +93,14 @@ function goToHome() {
 /**
  * 下拉刷新
  */
-function onRefresh() {
-  chatStore.loadSessions().then(() => {
-    uni.stopPullDownRefresh()
-  })
+async function onRefresh() {
+  isRefreshing.value = true
+  await chatStore.loadChatList()
+  isRefreshing.value = false
 }
 
 onShow(() => {
-  chatStore.loadSessions()
+  chatStore.loadChatList()
 })
 </script>
 
@@ -140,6 +153,13 @@ onShow(() => {
 /* 聊天列表 */
 .chat-list {
   flex: 1;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 100rpx;
+  color: #999;
+  font-size: 28rpx;
 }
 
 /* 空状态 */

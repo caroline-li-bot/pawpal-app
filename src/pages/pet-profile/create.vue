@@ -361,10 +361,11 @@ async function choosePhoto() {
       try {
         // 上传每张照片
         for (const filePath of res.tempFilePaths) {
+          let photoUrl = ''
+          
           // #ifdef MP-WEIXIN
           const fileName = filePath.split('/').pop() || 'photo.jpg'
-          const url = await petApi.uploadPhotoMP(filePath, fileName)
-          form.value.photos.push(url)
+          photoUrl = await petApi.uploadPhotoMP(filePath, fileName)
           // #endif
           
           // #ifdef H5
@@ -372,9 +373,10 @@ async function choosePhoto() {
           const response = await fetch(filePath)
           const blob = await response.blob()
           const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' })
-          const url = await petApi.uploadPhotoH5(file)
-          form.value.photos.push(url)
+          photoUrl = await petApi.uploadPhotoH5(file)
           // #endif
+          
+          form.value.photos.push(photoUrl)
         }
       } catch (err: any) {
         photoError.value = err.message || '上传失败'

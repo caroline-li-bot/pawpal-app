@@ -24,14 +24,14 @@
       scroll-with-animation
     >
       <view class="message-container">
-        <!-- 时间提示 -->
-        <view class="time-divider">
-          <text>今天</text>
+        <!-- 加载更多 -->
+        <view v-if="isLoading" class="loading-more">
+          <text>加载中...</text>
         </view>
 
         <!-- 消息项 -->
         <view 
-          v-for="(message, index) in chatStore.currentMessages" 
+          v-for="(message, index) in messages" 
           :key="message.id"
           class="message-item"
           :class="{ 'is-self': message.sender_id === userStore.user?.id }"
@@ -63,7 +63,7 @@
           <!-- 自己头像 -->
           <image 
             v-if="message.sender_id === userStore.user?.id"
-            :src="userStore.petProfile?.photos[0] || '/static/default-avatar.png'" 
+            :src="userStore.petProfile?.photos?.[0] || '/static/default-avatar.png'" 
             class="message-avatar" 
             mode="aspectFill" 
           />
@@ -74,8 +74,7 @@
     <!-- 输入区域 -->
     <view class="input-area">
       <view class="input-toolbar">
-        <view class="toolbar-btn" @click="chooseImage"
-        >
+        <view class="toolbar-btn" @click="chooseImage">
           <text>📷</text>
         </view>
       </view>
@@ -102,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
 import { useChatStore } from '@/stores/chat'
@@ -116,6 +115,11 @@ const petName = ref('')
 const petAvatar = ref('')
 const inputText = ref('')
 const scrollTop = ref(0)
+const isLoading = ref(false)
+
+const messages = computed(() => {
+  return chatStore.messages[matchId.value] || []
+})
 
 /**
  * 发送消息
@@ -127,11 +131,11 @@ async function sendMessage() {
   inputText.value = ''
   
   try {
-    await chatStore.sendMessage(content)
+    await chatStore.sendMessage(matchId.value, content)
     scrollToBottom()
-  } catch (err) {
+  } catch (err: any) {
     uni.showToast({
-      title: '发送失败',
+      title: err.message || '发送失败',
       icon: 'none',
     })
   }
@@ -146,20 +150,10 @@ function chooseImage() {
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
     success: async (res) => {
-      try {
-        // TODO: 上传图片到 Supabase Storage
-        // const imageUrl = await uploadImage(res.tempFilePaths[0])
-        // await chatStore.sendMessage(imageUrl, 'image')
-        uni.showToast({
-          title: '图片功能开发中',
-          icon: 'none',
-        })
-      } catch (err) {
-        uni.showToast({
-          title: '发送失败',
-          icon: 'none',
-        })
-      }
+      uni.showToast({
+        title: '图片功能开发中',
+        icon: 'none',
+      })
     },
   })
 }
@@ -189,8 +183,6 @@ function goBack() {
   uni.navigateBack()
 }
 
-let unsubscribe: (() => void) | null = null
-
 onLoad((options) => {
   matchId.value = options?.matchId || ''
   petId.value = options?.petId || ''
@@ -199,9 +191,7 @@ onLoad((options) => {
 
   if (matchId.value) {
     chatStore.loadMessages(matchId.value)
-    // 订阅实时消息
-    const subscription = chatStore.subscribeToMessages(matchId.value)
-    unsubscribe = () => subscription.unsubscribe()
+    chatStore.subscribeToMessages(matchId.value)
   }
 })
 
@@ -210,9 +200,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe()
-  }
+  chatStore.unsubscribe()
 })
 </script>
 
@@ -289,17 +277,14 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-.time-divider {
+.loading-more {
   text-align: center;
-  margin: 20rpx 0;
+  padding: 20rpx;
 }
 
-.time-divider text {
+.loading-more text {
   font-size: 24rpx;
   color: #999;
-  background: #e0e0e0;
-  padding: 8rpx 20rpx;
-  border-radius: 8rpx;
 }
 
 .message-item {

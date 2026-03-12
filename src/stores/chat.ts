@@ -4,7 +4,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Message, ChatSession } from '@/types'
-import { chatApi } from '@/api/supabase'
+import { chatApi, supabase } from '@/api/supabase'
 
 export const useChatStore = defineStore('chat', () => {
   // State
@@ -159,7 +159,7 @@ export const useChatStore = defineStore('chat', () => {
    */
   function unsubscribe() {
     if (activeChannel.value) {
-      chatApi.unsubscribe(activeChannel.value)
+      supabase.removeChannel(activeChannel.value)
       activeChannel.value = null
     }
   }

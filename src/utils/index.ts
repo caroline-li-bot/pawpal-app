@@ -169,8 +169,8 @@ export function isOnline(): boolean {
   // #endif
   
   // #ifdef MP-WEIXIN
-  const networkType = uni.getNetworkType()
-  return networkType !== 'none'
+  // 小程序环境返回 true，实际使用时需要异步获取
+  return true
   // #endif
   
   return true

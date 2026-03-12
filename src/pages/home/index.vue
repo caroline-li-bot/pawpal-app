@@ -90,7 +90,7 @@
             <text class="pet-bio">{{ pet.bio }}</text>
 
             <view class="info-footer">
-              <text class="distance">📍 {{ formatDistance(pet.distance) }}</text>
+              <text class="distance">📍 {{ pet.location || '附近' }}</text>
             </view>
           </view>
         </view>
