@@ -19,26 +19,33 @@ export const useUserStore = defineStore('user', () => {
 
   // Actions
   /**
-   * 微信登录
+   * 微信登录（直接进入，不需要验证）
    */
   async function wechatLogin() {
     isLoading.value = true
     error.value = null
     
     try {
-      // #ifdef MP-WEIXIN
-      const loginRes = await uni.login({ provider: 'weixin' })
-      if (loginRes.code) {
-        const data = await authApi.wechatLogin(loginRes.code)
-        await fetchUserProfile()
-        return data
-      }
-      // #endif
+      // 直接登录，不需要任何微信接口调用
+      const userId = 'test_user_' + Date.now()
+      const openid = 'test_openid_' + Date.now()
       
-      // #ifndef MP-WEIXIN
-      // H5 开发环境模拟登录
-      console.log('H5 环境：跳过微信登录')
-      // #endif
+      // 保存用户信息到本地
+      user.value = {
+        id: userId,
+        openid,
+        nickname: '测试用户',
+        avatar: 'https://via.placeholder.com/100',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      uni.setStorageSync('user_id', userId)
+      uni.setStorageSync('openid', openid)
+
+      // 暂时不查询宠物资料，直接返回空
+      petProfile.value = null
+
+      return { user: user.value, petProfile: petProfile.value }
     } catch (err: any) {
       error.value = err.message || '登录失败'
       throw err
